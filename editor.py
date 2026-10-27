@@ -50,6 +50,9 @@ class Editor:
         self.ctrl = False
         self.ongrid = True
 
+        self.stack = []
+        self.temp = None
+
     def run(self):
         while True:
             self.display.fill((0, 0, 0))
@@ -118,6 +121,7 @@ class Editor:
                 if event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
                         self.clicking = False
+                        self.stack.append(self.tilemap.tilemap.copy())
                     if event.button == 3:
                         self.right_clicking = False
                 
@@ -131,9 +135,6 @@ class Editor:
                         self.movement[2] = True
                     if event.key == pygame.K_s:
                         self.movement[3] = True
-                    if event.key == pygame.K_o:
-                        self.tilemap.save(self.level.get_current_level())
-                        print('saved ' + str(self.level.current_level))
                     if event.key == pygame.K_t:
                         self.tilemap.autotile()
                         print('autotiled')
@@ -142,6 +143,8 @@ class Editor:
 
                     if event.key == pygame.K_LSHIFT:
                         self.shift = True
+                    if event.key == pygame.K_LCTRL:
+                        self.ctrl = True
 
                     # mouse substitutes and level changing buttons
                     if self.shift: # [2:36]
@@ -161,6 +164,18 @@ class Editor:
                             self.tile_group = (self.tile_group + 1) % len(self.tile_list)
                             self.tile_variant = 0
 
+                    if self.ctrl:
+                        if event.key == pygame.K_s:
+                            self.tilemap.save(self.level.get_current_level())
+                            print('saved ' + str(self.level.current_level))
+
+                        if event.key == pygame.K_BACKSPACE:
+                            self.tilemap.tilemap = {}
+
+                        if event.key == pygame.K_z:
+                            self.tilemap.tilemap = self.stack.pop().copy()
+                        
+
 
                     if event.key == pygame.K_g: # grid toggle
                         self.ongrid = not self.ongrid
@@ -176,6 +191,8 @@ class Editor:
                         self.movement[3] = False
                     if event.key == pygame.K_LSHIFT:
                         self.shift = False
+                    if event.key == pygame.K_LCTRL:
+                        self.ctrl = False
 
             pygame.display.set_caption(self.level.get_current_level())
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
