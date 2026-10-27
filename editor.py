@@ -5,7 +5,6 @@ import pygame
 from data.scripts.utils import load_images, load_image
 from data.scripts.tilemap import Tilemap
 from data.scripts.levels import Level
-from main import Game
 
 RENDER_SCALE = 2.0      # for fixing mouse position to fit the resized display
 
@@ -24,8 +23,7 @@ class Editor:
             'target': [load_image('target.png')],
             'bell': [load_image('bell.png')],
             'button': [load_image('button.png')],
-            'wall': [load_image('tiles/0.png')],
-            'spawners': load_images('spawners')
+            'wall': load_images('tiles'),
            }
         
         self.movement = [False, False, False, False]
@@ -49,6 +47,7 @@ class Editor:
         self.clicking = False
         self.right_clicking = False
         self.shift = False
+        self.ctrl = False
         self.ongrid = True
 
     def run(self):
@@ -138,8 +137,8 @@ class Editor:
                     if event.key == pygame.K_t:
                         self.tilemap.autotile()
                         print('autotiled')
-                    if event.key == pygame.k_r:
-                        Game(True).select_level(self.level.get_current_level())
+                    if event.key == pygame.K_r:
+                        pass
 
                     if event.key == pygame.K_LSHIFT:
                         self.shift = True

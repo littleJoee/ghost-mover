@@ -1,8 +1,9 @@
 import pygame
 import sys
+import random
 
-from data.scripts.utils import load_image
-from data.scripts.entites import Player, Bell
+from data.scripts.utils import load_image, load_images
+from data.scripts.entites import Player, Bell, Button
 
 from data.scripts.tilemap import Tilemap
 from data.scripts.levels import Level
@@ -22,10 +23,11 @@ class Game:
             'target': load_image('target.png'),
             'bell': load_image('bell.png'),
             'button': load_image('button.png'),
-            'wall': load_image('tiles/0.png')
+            'wall': load_images('tiles')
         }
         self.movement = [False, False, False, False]
         self.action = False
+        self.screen_shake = 0
 
         self.tilemap = Tilemap(self, tile_size=16)
         self.level = Level(self.tilemap)
@@ -35,29 +37,49 @@ class Game:
     def load_level(self, map_id):
         self.player = Player(self, [0, 0], 'player') 
         self.tilemap.load(map_id)
-        print(self.tilemap.tilemap)
 
         self.bells = []
-        for spawner in self.tilemap.extract([('player', 0), ('bell', 0)]):
-            print(spawner)
-            if spawner['type'] == 0:
+        self.buttons = []
+        for spawner in self.tilemap.extract([('player', 0), ('bell', 0), ('button', 0)], False):
+            if spawner['type'] == 'player':
                 self.player.pos = [spawner['pos'][0], spawner['pos'][1]]
+            if spawner['type'] == 'button':
+                self.buttons.append(Button(self, spawner['pos']))
             else:
                 self.bells.append(Bell(self, (spawner['pos'][0], spawner['pos'][1])))
 
+
     def select_level(self, level_id: str):
         self.tilemap.load(level_id)
+
+    def check_win(self):
+        if all(button.pressed for button in self.buttons):
+            if self.level.won():
+                self.load_level(self.level.current_level)
+            # no more levels, quit
+            pygame.quit()
+            sys.exit()
 
     def run(self):
         while self.running:
             self.display.fill((0, 0, 0))
 
+            self.check_win()
+
             self.player.update(self.bells, [self.movement[1] - self.movement[0], self.movement[3] - self.movement[2]])
             self.player.render(self.display)
+
+            for button in self.buttons:
+                button.update([self.movement[1] - self.movement[0], self.movement[3] - self.movement[2]])
+                button.render(self.display)
+
 
             for bell in self.bells:
                 bell.update()
                 bell.render(self.display)
+
+
+            self.tilemap.render(self.display)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -89,8 +111,14 @@ class Game:
                     if event.key == pygame.K_x:
                         self.action = False
                     
+            render_offset = [0, 0]
+            if self.screen_shake:
+                self.screen_shake -= 1
+                
+                render_offset[0] = random.randint(0, 8) - 4
+                render_offset[1] = random.randint(0, 8) - 4
 
-            self.screen.blit(pygame.transform.scale(self.display, self.screen_size), (0, 0))
+            self.screen.blit(pygame.transform.scale(self.display, self.screen_size), render_offset)
             pygame.display.update()
             self.clock.tick(60)
 

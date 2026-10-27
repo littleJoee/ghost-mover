@@ -34,18 +34,23 @@ class Entity:
         self.pos = list(pos)
         self.type = e_type
         self.timer = 0
-        self.offsets = [[-1, 0], [0, 1], [1, 0], [0, -1], # first layer
+        self.tilesize = 16
+        self.offsets = [[-1, 0], [0, 1], [1, 0], [0, -1], # first layer for bells
                         [-2, 0], [0, 2], [2, 0], [0, -2]] # second layer
+        
 
     def rect(self, pos=None):
         if pos:
             return pygame.Rect(pos[0], pos[1], 16, 16)
         return pygame.Rect(self.pos[0], self.pos[1], 16, 16)
 
-    def wall_check(self, pos):
-        tiles: dict = self.game.tilemap.get_type('wall')
-        if f"{pos[0]};{pos[1]}" in tiles:
+    def in_wall(self, pos):
+        if f"{pos[0]//self.tilesize};{pos[1]//self.tilesize}" in self.game.tilemap.tilemap:
             return True
+        return False
+
+    def shake_screen(self, value=5):
+        self.game.screen_shake = value
 
     def update(self, movement=(0,0)):
         self.timer = max(0, self.timer - 1)
@@ -59,6 +64,24 @@ class Entity:
 
     def render(self, surf: Surface):
         surf.blit(self.game.assets[self.type], self.pos)   
+
+class Button(Entity):
+    def __init__(self, game, pos):
+        super().__init__(game, pos, 'button')
+        self.pressed = False
+        self.just_pressed = False
+
+    def update(self, movement=[0,0]):
+        for bell in self.game.bells:
+            if self.rect().colliderect(bell.rect()):
+                self.pressed = True
+                if not self.just_pressed:
+                    self.just_pressed = True
+                    self.shake_screen(1)
+                return
+
+        self.pressed = False
+        self.just_pressed = False
 
 class Bell(Entity):
     def __init__(self, game, pos):
@@ -85,9 +108,14 @@ class Bell(Entity):
             else:
                 next_pos = targets[self.target_index + 1]
 
-        if self.game.action and self.timer == 0:
-            self.pos = next_pos
-            self.timer = self.max_timer
+        if (self.game.action and self.timer == 0):
+            if not self.in_wall(next_pos):
+                self.pos = next_pos
+                self.timer = self.max_timer
+            else:
+                self.shake_screen()
+        else:
+            return False
         
 
 class Player(Entity):
@@ -102,6 +130,10 @@ class Player(Entity):
             if entity_rect.colliderect(rects):
                 self.pos[0] -= movement[0] * 16
                 self.pos[1] -= movement[1] * 16
+
+        if self.in_wall(self.pos):
+            self.pos[0] -= movement[0] * 16
+            self.pos[1] -= movement[1] * 16
             
         self.targets = []
         bells_to_move = []

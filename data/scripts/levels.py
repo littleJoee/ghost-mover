@@ -11,12 +11,21 @@ class Level:
         self.current_level = 0
         self.tilemap = tilemap
         self.editor_special_case = False
+        self.no_of_levels = self.get_level_len()
 
     def get_current_level(self):
         return str(self.current_level) + '.json'
 
     def get_level_len(self):
         return len(os.listdir(BASE_LEVEL_PATH))
+
+    def won(self):
+        print(self.current_level, self.no_of_levels)
+        if self.current_level + 1 <= self.no_of_levels:
+            self.current_level += 1
+            return True
+        return False
+    
 
     def save_level(self, custom=None):
         if custom:
