@@ -7,13 +7,15 @@ from data.scripts.entites import Player, Bell, Button
 
 from data.scripts.tilemap import Tilemap
 from data.scripts.levels import Level
+from data.scripts.trasnsition import Transition
 
 class Game:
     screen_size = (960, 620)
     def __init__(self, is_editor=False):
         pygame.init()
         self.screen = pygame.display.set_mode(self.screen_size)
-        self.display = pygame.Surface((self.screen_size[0] / 2, self.screen_size[1] / 2))
+        self.display = pygame.Surface((480, 310), pygame.SRCALPHA)
+        self.display_2 = pygame.surface.Surface((480, 310))
         self.clock = pygame.time.Clock()
         self.is_editor = is_editor
         self.running = True
@@ -28,25 +30,31 @@ class Game:
         self.movement = [False, False, False, False]
         self.action = False
         self.screen_shake = 0
+        self.transition = -30
+        self.dead = False
+        print(self.assets['player'].get_at((8, 8)))
 
         self.tilemap = Tilemap(self, tile_size=16)
         self.level = Level(self.tilemap)
 
+        self.player = Player(self, [0, 0], 'player') 
         self.load_level(self.level.get_current_level())
 
-    def load_level(self, map_id):
-        self.player = Player(self, [0, 0], 'player') 
+    def load_level(self, map_id: str):
         self.tilemap.load(map_id)
 
         self.bells = []
         self.buttons = []
         for spawner in self.tilemap.extract([('player', 0), ('bell', 0), ('button', 0)], False):
-            if spawner['type'] == 'player':
+            if spawner['type'] == 'player' and spawner['variant'] == 0:
                 self.player.pos = [spawner['pos'][0], spawner['pos'][1]]
-            if spawner['type'] == 'button':
+            if spawner['type'] == 'button' and spawner['variant'] == 0:
                 self.buttons.append(Button(self, spawner['pos']))
-            else:
+            if spawner['type'] == 'bell' and spawner['variant'] == 0:
                 self.bells.append(Bell(self, (spawner['pos'][0], spawner['pos'][1])))
+
+        self.dead = False
+        self.transition = -30
 
 
     def select_level(self, level_id: str):
@@ -55,16 +63,26 @@ class Game:
     def check_win(self):
         if all(button.pressed for button in self.buttons):
             if self.level.won():
-                self.load_level(self.level.current_level)
+                self.dead = True
+                return
             # no more levels, quit
             pygame.quit()
             sys.exit()
 
     def run(self):
         while self.running:
-            self.display.fill((0, 0, 0))
+            self.display.fill((10, 10, 10))
 
-            self.check_win()
+            if not self.dead:
+                self.check_win()
+
+            if self.dead:
+                self.transition = min(40, self.transition + 1)
+                if self.transition == 30:
+                    self.load_level(self.level.get_current_level())
+
+            if self.transition < 0:
+                self.transition += 1
 
             self.player.update(self.bells, [self.movement[1] - self.movement[0], self.movement[3] - self.movement[2]])
             self.player.render(self.display)
@@ -117,6 +135,13 @@ class Game:
                 
                 render_offset[0] = random.randint(0, 8) - 4
                 render_offset[1] = random.randint(0, 8) - 4
+
+            if self.transition:
+                transition_surf = pygame.Surface(self.display.get_size())
+                # transition_surf.fill((99, 155, 255)) blue transiton too overwhelming
+                pygame.draw.circle(transition_surf, (255, 255, 255), (self.display.get_width() // 2, self.display.get_height() // 2), (30 - abs(self.transition)) * 8)
+                transition_surf.set_colorkey((255, 255, 255))
+                self.display.blit(transition_surf, (0, 0))
 
             self.screen.blit(pygame.transform.scale(self.display, self.screen_size), render_offset)
             pygame.display.update()

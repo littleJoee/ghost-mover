@@ -14,5 +14,8 @@ def load_images(path):
         images.append(load_image(path + '/' + img_name))
     return images
 
+def draw_text():
+    pass
+
 def lerp(a, b, t):
     return a + t(b - a)

@@ -20,10 +20,13 @@ class Level:
         return len(os.listdir(BASE_LEVEL_PATH))
 
     def won(self):
-        print(self.current_level, self.no_of_levels)
-        if self.current_level + 1 <= self.no_of_levels:
+        print(self.current_level, self.no_of_levels - 2)
+        if self.current_level <= self.no_of_levels - 2:
             self.current_level += 1
             return True
+        print('Finished Game')
+        # self.current_level = 'game_over' TODO gameover level with text spawner and total 
+        # time spent under that
         return False
     
 

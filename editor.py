@@ -167,7 +167,7 @@ class Editor:
                     if self.ctrl:
                         if event.key == pygame.K_s:
                             self.tilemap.save(self.level.get_current_level())
-                            print('saved ' + str(self.level.current_level))
+                            print('Saved File ' + str(self.level.current_level) + '.JSON')
 
                         if event.key == pygame.K_BACKSPACE:
                             self.tilemap.tilemap = {}
