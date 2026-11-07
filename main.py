@@ -3,7 +3,7 @@ import sys
 import random
 
 from data.scripts.utils import load_image, load_images
-from data.scripts.entites import Player, Bell, Button
+from data.scripts.entites import Player, Bell, Button, TextObj
 
 from data.scripts.tilemap import Tilemap
 from data.scripts.levels import Level
@@ -25,14 +25,21 @@ class Game:
             'target': load_image('target.png'),
             'bell': load_image('bell.png'),
             'button': load_image('button.png'),
-            'wall': load_images('tiles')
+            'wall': load_images('tiles'),
+            'text_img': load_images('text')
         }
+        self.sfx = {
+            'ambiance': pygame.mixer.Sound('data/sfx/ambience.wav'),
+            'beat': None,
+        }
+
+        self.sfx['ambiance'].set_volume(0.1)
         self.movement = [False, False, False, False]
         self.action = False
         self.screen_shake = 0
         self.transition = -30
         self.dead = False
-        print(self.assets['player'].get_at((8, 8)))
+        # print(self.assets['player'].get_at((8, 8)))
 
         self.tilemap = Tilemap(self, tile_size=16)
         self.level = Level(self.tilemap)
@@ -53,6 +60,12 @@ class Game:
             if spawner['type'] == 'bell' and spawner['variant'] == 0:
                 self.bells.append(Bell(self, (spawner['pos'][0], spawner['pos'][1])))
 
+        self.text = []
+        for text_img in self.tilemap.extract([('text_img', i) for i in range(5)]):
+            self.text.append(TextObj(self, text_img['pos'], text_img['variant']))
+
+        self.text[3].effect = True
+
         self.dead = False
         self.transition = -30
 
@@ -71,6 +84,7 @@ class Game:
 
     def run(self):
         while self.running:
+            self.sfx['ambiance'].play(-1)
             self.display.fill((10, 10, 10))
 
             if not self.dead:
@@ -99,6 +113,10 @@ class Game:
 
             self.tilemap.render(self.display)
 
+            for text in self.text:
+                text.update()
+                text.render(self.display)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     if self.is_editor:
@@ -117,6 +135,8 @@ class Game:
                         self.movement[3] = True
                     if event.key == pygame.K_x:
                         self.action = True
+                    if event.key == pygame.K_c:
+                        self.player.cycle_types()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement[0] = False

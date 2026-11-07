@@ -40,11 +40,15 @@ class Level:
         self.tilemap.save(str(self.current_level) + '.json')
 
         if change == '+':
+            if self.tilemap.tilemap == {} or self.current_level > self.get_level_len() - 1:
+                return
             if self.current_level != self.get_level_len() + 1:
                 self.current_level += 1
             try:
                 self.tilemap.load(str(self.current_level) + '.json')
             except FileNotFoundError:
+                self.tilemap.save(str(self.current_level - 1) + '.json')
+                self.tilemap.tilemap = {}
                 self.tilemap.save(str(self.current_level) + '.json')
                 self.tilemap.load(str(self.current_level) + '.json')
         if change == '-':

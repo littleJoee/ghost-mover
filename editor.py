@@ -24,6 +24,7 @@ class Editor:
             'bell': [load_image('bell.png')],
             'button': [load_image('button.png')],
             'wall': load_images('tiles'),
+            'text_img': load_images('text')
            }
         
         self.movement = [False, False, False, False]

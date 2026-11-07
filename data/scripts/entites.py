@@ -2,6 +2,7 @@ from pygame import Surface
 from .utils import lerp
 
 import pygame
+import math
 
 class SpecialPlayerTargets:
     # for more complex target movers
@@ -35,8 +36,6 @@ class Entity:
         self.type = e_type
         self.timer = 0
         self.tilesize = 16
-        self.offsets = [[-1, 0], [0, 1], [1, 0], [0, -1], # first layer for bells
-                        [-2, 0], [0, 2], [2, 0], [0, -2]] # second layer
         
 
     def rect(self, pos=None):
@@ -116,11 +115,41 @@ class Bell(Entity):
                 self.shake_screen()
         else:
             return False
+
+class TextObj:
+    def __init__(self, game, pos, text_index, bounce=False, speed=0.1):
+        self.game = game
+        self.pos = list(pos)
+        self.effect = bounce
+        self.text_index = text_index
         
+        self.time = 0
+        self.speed = speed
+        self.hover_height = 10
+
+
+    def update(self):
+        if not self.effect:
+            return
+        self.time += 0.1
+
+        self.pos[1] = self.hover_height * math.cos(self.time * self.speed)
+
+    def render(self, surf):
+        surf.blit(self.game.assets['text_img'][self.text_index], self.pos)
 
 class Player(Entity):
     def __init__(self, game, pos, e_type):
         super().__init__(game, pos, 'player')
+        self.type_1 = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+        self.type_2 = [[-1, 0], [0, 1], [1, 0], [0, -1], # first layer for bells
+                        [-2, 0], [0, 2], [2, 0], [0, -2]] # second layer
+
+        self.type_3 = [[-1, 0], [0, 2], [1, 0], [0, -2]] # third layer
+        self.offsets_pos = [self.type_1, self.type_2, self.type_3]
+        self.value = 1 # two layered
+
+        self.offsets = self.offsets_pos[self.value]
         self.moving = False
 
     def update(self, entities: list[Bell], movement=(0, 0)):
@@ -146,6 +175,9 @@ class Player(Entity):
                     bells_to_move.append(rect)
         for bell in bells_to_move:
             bell.can_move(self.targets)
+
+    def cycle_types(self):
+        self.value = self.value + 1 % len(self.offsets_pos)
         
 
     def render(self, surf):
