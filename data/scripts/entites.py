@@ -64,6 +64,13 @@ class Entity:
     def render(self, surf: Surface):
         surf.blit(self.game.assets[self.type], self.pos)   
 
+class ToggableDoorWalls(Entity):
+    def __init__(self, game, pos):
+        pass
+
+    def update(self):
+        pass
+
 class Button(Entity):
     def __init__(self, game, pos):
         super().__init__(game, pos, 'button')

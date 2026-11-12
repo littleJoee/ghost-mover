@@ -19,7 +19,7 @@ class Editor:
         self.clock = pygame.time.Clock() 
 
         self.assets = {
-            'player': [load_image('ghost.png')],
+            'player': load_images('ghosts'),
             'target': [load_image('target.png')],
             'bell': [load_image('bell.png')],
             'button': [load_image('button.png')],
